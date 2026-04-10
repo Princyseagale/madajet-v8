@@ -2,16 +2,17 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const UserDB = require('./database.js');
-const readline = require('readline');
+const path = require('path'); // Ajouté pour la gestion des fichiers
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(__dirname));
+// Correction pour les fichiers statiques
+app.use(express.static(path.join(__dirname)));
 
 let multiplier = 1.00;
-let gameStatus = "waiting"; 
+let gameStatus = "waiting";
 let timeLeft = 10;
 let gameHistory = [];
 
@@ -19,7 +20,7 @@ function runEngine() {
     gameStatus = "waiting";
     multiplier = 1.00;
     timeLeft = 10;
-    io.sockets.sockets.forEach(s => s.currentBet = null); 
+    io.sockets.sockets.forEach(s => s.currentBet = null);
     let waitTimer = setInterval(() => {
         timeLeft--;
         io.emit('waiting', { time: timeLeft, history: gameHistory });
@@ -46,22 +47,28 @@ function startFlight() {
     }, 100);
 }
 
-// --- ADMIN CONSOLE (DÉPÔT VALIDATION) ---
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-function adminConsole() {
-    rl.question('\n[ADMIN BAIDRO] Entrez (Numéro Montant): ', (input) => {
-        const parts = input.split(' ');
-        if (parts.length === 2) {
-            const phone = parts[0], amount = parseInt(parts[1]);
-            const res = UserDB.updateBalance(phone, amount, true);
-            if (res !== null) {
-                console.log(`\n✅ VALIDÉ: +${amount} Ar pour ${phone}`);
-                const user = UserDB.getUser(phone);
-                io.emit('bal_res', user);
-            } else { console.log("\n❌ ERREUR: Numéro introuvable."); }
-        }
-        adminConsole();
-    });
+// --- MODIFICATION ADMIN ---
+// On désactive readline car il n'y a pas de clavier sur Vercel
+// Pour valider les dépôts, tu utiliseras les "Logs" de Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const readline = require('readline');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    function adminConsole() {
+        rl.question('\n[ADMIN BAIDRO] Entrez (Numéro Montant): ', (input) => {
+            const parts = input.split(' ');
+            if (parts.length === 2) {
+                const phone = parts[0], amount = parseInt(parts[1]);
+                const res = UserDB.updateBalance(phone, amount, true);
+                if (res !== null) {
+                    console.log(`\n✅ VALIDÉ: +${amount} Ar pour ${phone}`);
+                    const user = UserDB.getUser(phone);
+                    io.emit('bal_res', user);
+                } else { console.log("\n❌ ERREUR: Numéro introuvable."); }
+            }
+            adminConsole();
+        });
+    }
+    adminConsole();
 }
 
 io.on('connection', (socket) => {
@@ -78,47 +85,35 @@ io.on('connection', (socket) => {
     });
 
     socket.on('get_balance', (data) => {
-        const user = UserDB.getUser(data.phone); 
+        const user = UserDB.getUser(data.phone);
         if (user) socket.emit('bal_res', user);
     });
 
-    // --- NOTIFICATION DÉPÔT (RE-FIXED) ---
     socket.on('request_deposit', (data) => {
-        console.log(`\n================================`);
-        console.log(`🔔 NOUVEAU DÉPÔT !`);
-        console.log(`👤 Utilisateur : ${data.phone}`);
-        console.log(`💰 Montant     : ${data.amount} Ar`);
-        console.log(`🔑 Référence   : ${data.ref}`);
-        console.log(`================================\n`);
+        console.log(`🔔 DEPOT: ${data.phone} - ${data.amount} Ar - Ref: ${data.ref}`);
     });
 
-    // --- NOTIFICATION RETRAIT (RE-FIXED) ---
     socket.on('request_retrait', (data) => {
         const user = UserDB.getUser(data.phone);
         if (user && user.balance_real >= data.amount) {
             UserDB.updateBalance(data.phone, -data.amount, true);
-            console.log(`\n================================`);
-            console.log(`⚠️ DEMANDE DE RETRAIT !`);
-            console.log(`👤 De : ${data.phone}`);
-            console.log(`💰 Montant : ${data.amount} Ar`);
-            console.log(`📱 Vers : ${data.destPhone}`);
-            console.log(`✅ Solde déjà déduit.`);
-            console.log(`================================\n`);
+            console.log(`⚠️ RETRAIT: ${data.phone} - ${data.amount} Ar - Vers: ${data.destPhone}`);
             socket.emit('bal_res', UserDB.getUser(data.phone));
         } else {
-            socket.emit('auth_error', "Solde insuffisant pour le retrait !");
+            socket.emit('auth_error', "Solde insuffisant !");
         }
     });
 
     socket.on('place_bet', (data) => {
         if (gameStatus !== "waiting") return;
         const user = UserDB.getUser(data.phone);
+        if (!user) return;
         const amount = parseInt(data.amount);
         const isReal = (data.mode === 'real');
         const currentBal = isReal ? user.balance_real : user.balance_demo;
 
         if (currentBal < amount) {
-            return socket.emit('auth_error', "Solde insuffisant ! Veuillez faire un dépôt.");
+            return socket.emit('auth_error', "Solde insuffisant !");
         }
 
         const newBal = UserDB.updateBalance(data.phone, -amount, isReal);
@@ -137,5 +132,10 @@ io.on('connection', (socket) => {
 });
 
 runEngine();
-adminConsole();
-server.listen(3000, '0.0.0.0', () => console.log("SERVER MADA JET RUNNING ON PORT 3000"));
+
+// Port dynamique pour Vercel
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`SERVER MADA JET RUNNING ON PORT ${PORT}`));
+
+// LA LIGNE INDISPENSABLE POUR VERCEL
+module.exports = app;
