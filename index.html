@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MADA JET - V8 LOGO EDITION</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@400;700&display=swap');
+        
+        :root {
+            --bg-main: #0b0c0d;
+            --bg-panel: #161719;
+            --border: #2c2d30;
+            --m-green: #28a909;
+            --m-red: #e91d24;
+            --m-orange: #d98d28;
+            --m-gold: #f1c40f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: white; font-family: 'Roboto', sans-serif; overflow: hidden; height: 100vh; width: 100vw; display: flex; flex-direction: column; }
+
+        /* LOGO STYLE ALL-IN-ONE */
+        .brand-logo { display: flex; align-items: center; gap: 8px; }
+        .logo-svg { width: 26px; height: 26px; fill: var(--m-red); transform: rotate(15deg); filter: drop-shadow(0 0 5px var(--m-red)); }
+        .logo-txt { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.2rem; font-style: italic; color: #fff; letter-spacing: -1px; }
+        .logo-txt span { color: var(--m-red); }
+
+        /* TOAST NOTIF */
+        #toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--m-red); color: white; padding: 12px 25px; border-radius: 30px;
+            font-weight: bold; z-index: 20000; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-transform: uppercase; font-size: 0.8rem;
+        }
+
+        /* HEADER */
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 12px; background: linear-gradient(to bottom, #1f2024, #161719);
+            border-bottom: 2px solid var(--border); height: 60px; flex-shrink: 0;
+        }
+        
+        .action-container { display: flex; gap: 6px; flex: 2; justify-content: center; }
+        .btn-action {
+            border: none; border-radius: 8px; font-weight: 900; font-size: 0.65rem;
+            height: 34px; padding: 0 10px; color: white; cursor: pointer;
+            text-transform: uppercase; transition: transform 0.1s;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+        }
+        .btn-dep { background: var(--m-green); }
+        .btn-ret { background: var(--m-red); }
+
+        .balance-card {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+            border-radius: 8px; padding: 4px 8px; min-width: 85px;
+            display: flex; flex-direction: column; align-items: flex-end; position: relative;
+        }
+        .bal-val { color: var(--m-gold); font-weight: 900; font-size: 0.9rem; font-family: 'Montserrat', sans-serif; }
+        .bal-unit { font-size: 0.5rem; color: #888; font-weight: bold; }
+        .logout-btn { position: absolute; left: -25px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; cursor: pointer; border: none; background: none; }
+
+        /* HISTORY */
+        .history-section { background: #0a0a0a; padding: 8px 12px; display: flex; align-items: center; gap: 10px; overflow: hidden; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+        #history { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+        .hist-item { background: #1a1b1f; padding: 3px 10px; border-radius: 20px; font-weight: 900; font-size: 0.75rem; min-width: 55px; text-align: center; border: 1px solid #222; }
+
+        /* GAME AREA */
+        .game-container { flex: 1; padding: 12px; display: flex; flex-direction: column; }
+        .game-screen { 
+            flex: 1; background: radial-gradient(circle, #1a1b1f 0%, #000 100%); 
+            border-radius: 20px; border: 1px solid #333; position: relative; 
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+        #multiplier { font-family: 'Montserrat', sans-serif; font-size: 20vw; font-weight: 900; z-index: 5; text-shadow: 0 0 30px rgba(233,29,36,0.2); }
+        #curve { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(233,29,36,0.25), transparent); border-top: 3px solid var(--m-red); transition: height 0.1s linear; }
+
+        /* BET PANEL */
+        .bet-panel { background: var(--bg-panel); padding: 15px; border-radius: 25px 25px 0 0; border-top: 1px solid var(--border); box-shadow: 0 -10px 30px rgba(0,0,0,0.5); flex-shrink: 0; }
+        .bet-row { display: flex; gap: 12px; height: 100px; }
+        .bet-inputs { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        
+        .stepper { display: flex; background: #000; border: 1.5px solid var(--border); border-radius: 12px; align-items: center; padding: 2px; }
+        .stepper button { width: 40px; height: 36px; border: none; background: none; color: white; font-size: 1.4rem; font-weight: bold; }
+        .stepper input { flex: 1; background: none; border: none; color: white; text-align: center; font-weight: 900; font-size: 1.3rem; width: 40px; outline: none; }
+        
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .quick-grid button { background: #25262b; border: 1px solid var(--border); color: #bbb; border-radius: 8px; font-size: 0.75rem; font-weight: 900; padding: 6px; }
+
+        .main-btn { 
+            flex: 1.2; border: none; border-radius: 20px; color: white; font-weight: 900;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3); cursor: pointer; transition: all 0.1s;
+        }
+        .b-bet { background: var(--m-green); }
+        .b-cashout { background: var(--m-orange); }
+        .b-waiting { background: #333; color: #666; box-shadow: none; cursor: default; }
+
+        .btn-txt-top { font-family: 'Montserrat', sans-serif; font-size: 1.6rem; text-transform: uppercase; }
+        .btn-txt-btm { font-size: 1.1rem; opacity: 0.9; font-weight: 400; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Message</div>
+
+    <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg-main); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+        <div class="brand-logo" style="margin-bottom:30px; transform: scale(2.5);">
+            <svg class="logo-svg" viewBox="0 0 24 24"><path d="M21,16L14,12L21,8V16M3,20V4L10,12L3,20M13,12L22,12L22,13L13,13L13,12Z"/></svg>
+            <div class="logo-txt">Mada<span>Jet</span></div>
+        </div>
+        <div style="background:var(--bg-panel); padding:30px; border-radius:25px; width:100%; max-width:350px; border:1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <input type="number" id="phone" style="width:100%; padding:15px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border); background:#000; color:white; font-size:1.1rem;" placeholder="Téléphone">
+            <input type="password" id="pass" style="width:100%; padding:15px; margin-bottom:15px; border-radius:12px; border:1px solid var(--border); background:#000; color:white; font-size:1.1rem;" placeholder="Mot de passe">
+            <button type="button" class="main-btn b-bet" style="width:100%; height:55px;" onclick="doAuth()">CONNEXION</button>
+        </div>
+    </div>
+
+    <div id="game-ui" style="display:none; flex-direction:column; height:100dvh;">
+        <header class="header">
+            <div class="brand-logo">
+                <svg class="logo-svg" viewBox="0 0 24 24"><path d="M21,16L14,12L21,8V16M3,20V4L10,12L3,20M13,12L22,12L22,13L13,13L13,12Z"/></svg>
+                <div class="logo-txt">Mada<span>Jet</span></div>
+            </div>
+            
+            <div class="action-container">
+                <button class="btn-action btn-dep" onclick="openModal('dep-modal')">Dépôt</button>
+                <button class="btn-action btn-ret" onclick="openModal('ret-modal')">Retrait</button>
+            </div>
+
+            <div class="balance-card">
+                <button class="logout-btn" onclick="doLogout()">🚪</button>
+                <span id="bal-display" class="bal-val">0</span>
+                <span class="bal-unit">ARIARY</span>
+            </div>
+        </header>
+
+        <div class="history-section">
+            <div id="history"></div>
+        </div>
+
+        <main class="game-container">
+            <div class="game-screen">
+                <h1 id="multiplier">1.00x</h1>
+                <div id="curve" style="height: 0%"></div>
+            </div>
+        </main>
+
+        <footer class="bet-panel">
+            <div class="bet-row">
+                <div class="bet-inputs">
+                    <div class="stepper">
+                        <button type="button" onclick="adj(-1000)">-</button>
+                        <input type="number" id="bet-amt" value="1000">
+                        <button type="button" onclick="adj(1000)">+</button>
+                    </div>
+                    <div class="quick-grid">
+                        <button type="button" onclick="setB(1000)">1000</button>
+                        <button type="button" onclick="setB(5000)">5000</button>
+                    </div>
+                </div>
+                <button type="button" id="main-action" class="main-btn b-bet" onclick="handleMainAction()">
+                    <span class="btn-txt-top" id="btn-label">BET</span>
+                    <span class="btn-txt-btm" id="btn-sub">1000 Ar</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <div id="dep-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:var(--bg-panel); padding:25px; border-radius:25px; width:100%; max-width:340px; border:1px solid var(--border); text-align:center;">
+            <h3 style="margin-bottom:15px; color:var(--m-green)">DÉPÔT MVOLA</h3>
+            <p style="color:#888; font-size:0.85rem; margin-bottom:15px;">Envoyez au : <b style="color:white">038 10 646 66</b></p>
+            <input type="number" id="d-amt" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; background:#000; border:1px solid #333; color:white;" placeholder="Montant">
+            <input type="text" id="d-ref" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; background:#000; border:1px solid #333; color:white;" placeholder="Référence">
+            <button class="main-btn b-bet" style="width:100%; height:45px;" onclick="submitDep()">VALIDER</button>
+            <button onclick="closeModal('dep-modal')" style="background:none; border:none; color:#666; margin-top:15px; font-weight:bold;">FERMER</button>
+        </div>
+    </div>
+
+    <div id="ret-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:var(--bg-panel); padding:25px; border-radius:25px; width:100%; max-width:340px; border:1px solid var(--border); text-align:center;">
+            <h3 style="margin-bottom:15px; color:var(--m-red)">RETRAIT MVOLA</h3>
+            <input type="number" id="r-phone" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; background:#000; border:1px solid #333; color:white;" placeholder="Numéro Mvola">
+            <input type="number" id="r-amt" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; background:#000; border:1px solid #333; color:white;" placeholder="Montant Ariary">
+            <button class="main-btn b-bet" style="width:100%; height:45px; background:var(--m-red)" onclick="submitRet()">RETIRER</button>
+            <button onclick="closeModal('ret-modal')" style="background:none; border:none; color:#666; margin-top:15px; font-weight:bold;">FERMER</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let uPhone = "", isPlaying = false, hasBet = false, gameState = "waiting";
+
+        const $ = id => document.getElementById(id);
+        const openModal = id => $(id).style.display = 'flex';
+        const closeModal = id => $(id).style.display = 'none';
+
+        function showToast(msg, color = "var(--m-red)") {
+            const t = $('toast');
+            t.innerText = msg; t.style.background = color; t.style.top = "20px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
+        const setB = v => { if(!hasBet && gameState === "waiting") { $('bet-amt').value = v; updateBtn(); } };
+        const adj = v => { if(!hasBet && gameState === "waiting") { $('bet-amt').value = Math.max(100, parseInt($('bet-amt').value) + v); updateBtn(); } };
+        const updateBtn = () => { if(gameState === "waiting" && !hasBet) $('btn-sub').innerText = $('bet-amt').value + " Ar"; };
+
+        window.onload = () => {
+            const saved = localStorage.getItem('madaUser');
+            if(saved) {
+                const u = JSON.parse(saved);
+                socket.emit('auth_attempt', { mode: 'login', phone: u.phone, pass: u.pass });
+            }
+        }
+
+        function doAuth() { socket.emit('auth_attempt', { mode: 'login', phone: $('phone').value, pass: $('pass').value }); }
+        
+        socket.on('auth_success', u => {
+            uPhone = u.phone;
+            localStorage.setItem('madaUser', JSON.stringify({ phone: u.phone, pass: $('pass').value }));
+            $('auth-screen').style.display = 'none'; $('game-ui').style.display = 'flex';
+            $('bal-display').innerText = u.balance_real.toLocaleString();
+        });
+
+        socket.on('auth_error', m => { showToast(m); localStorage.removeItem('madaUser'); });
+        function doLogout() { localStorage.removeItem('madaUser'); location.reload(); }
+
+        function handleMainAction() {
+            const btn = $('main-action');
+            if(btn.classList.contains('b-bet')) {
+                if(gameState !== "waiting") return showToast("Attendez le prochain tour !");
+                if(hasBet) return;
+                const amt = parseInt($('bet-amt').value);
+                const bal = parseInt($('bal-display').innerText.replace(/\s/g, ''));
+                if(amt > bal) return showToast("Solde insuffisant !");
+                hasBet = true;
+                btn.className = "main-btn b-waiting";
+                $('btn-label').innerText = "OK";
+                socket.emit('place_bet', { phone: uPhone, amount: amt, mode: 'real' });
+            } else if(btn.classList.contains('b-cashout')) {
+                socket.emit('cashout', { phone: uPhone });
+            }
+        }
+
+        socket.on('tick', d => {
+            gameState = "running";
+            $('multiplier').innerText = parseFloat(d.val).toFixed(2) + "x";
+            $('multiplier').style.color = d.val >= 2 ? "var(--m-red)" : "white";
+            $('curve').style.height = Math.min(100, (d.val / 4) * 100) + "%";
+            if(hasBet) { isPlaying = true; hasBet = false; }
+            if(isPlaying) {
+                $('main-action').className = "main-btn b-cashout";
+                $('btn-label').innerText = "CASH OUT";
+                $('btn-sub').innerText = Math.floor($('bet-amt').value * d.val).toLocaleString() + " Ar";
+            } else if (!hasBet) {
+                $('main-action').className = "main-btn b-waiting";
+                $('btn-label').innerText = "EN COURS";
+            }
+        });
+
+        socket.on('waiting', d => {
+            gameState = "waiting"; isPlaying = false;
+            if(!hasBet) {
+                $('main-action').className = "main-btn b-bet";
+                $('btn-label').innerText = "BET";
+                updateBtn();
+            }
+            $('multiplier').innerText = "Wait " + d.time + "s";
+            $('multiplier').style.color = "white";
+            $('curve').style.height = "0%";
+            if(d.history) {
+                $('history').innerHTML = d.history.map(val => `<div class="hist-item" style="color:${val>=2?'#e91d24':'#9752e0'}">${parseFloat(val).toFixed(2)}x</div>`).join('');
+            }
+        });
+
+        socket.on('crash', () => { isPlaying = false; hasBet = false; $('multiplier').innerText = "FLEW AWAY!"; $('main-action').className = "main-btn b-waiting"; $('btn-label').innerText = "CRASH"; });
+        socket.on('cashout_ok', d => { isPlaying = false; $('bal-display').innerText = d.balance.toLocaleString(); showToast("Gagné !", "var(--m-green)"); $('main-action').className = "main-btn b-waiting"; $('btn-label').innerText = "WIN!"; });
+        socket.on('bet_confirmed', d => { hasBet = true; $('bal-display').innerText = d.balance.toLocaleString(); });
+
+        function submitDep() { socket.emit('request_deposit', { phone: uPhone, amount: $('d-amt').value, ref: $('d-ref').value }); closeModal('dep-modal'); showToast("Envoyé", "var(--m-green)"); }
+        function submitRet() { socket.emit('request_retrait', { phone: uPhone, destPhone: $('r-phone').value, amount: $('r-amt').value }); closeModal('ret-modal'); showToast("Envoyé", "var(--m-green)"); }
+    </script>
+</body>
+</html>
